@@ -1,0 +1,82 @@
+name: DeliveryApp
+
+entities:
+  User:
+    authenticable: true
+    properties:
+      - name
+      - name: email
+        type: email
+      - name: role
+        type: choice
+        options:
+          values: [customer, driver, admin]
+        default: customer
+      - name: phone
+        type: string
+    policies:
+      create:
+        - access: admin
+      read:
+        - access: restricted
+          allow: User
+          condition: self
+        - access: admin
+      update:
+        - access: restricted
+          allow: User
+          condition: self
+        - access: admin
+      delete:
+        - access: admin
+      signup:
+        - access: public
+
+  Delivery:
+    properties:
+      - name: itemName
+        type: string
+      - name: itemDescription
+        type: text
+      - name: pickupAddress
+        type: string
+      - name: dropoffAddress
+        type: string
+      - name: status
+        type: choice
+        options:
+          values: [pending, accepted, in_progress, delivered, cancelled]
+        default: pending
+      - name: deliveryFee
+        type: money
+        options:
+          currency: 'USD'
+    belongsTo:
+      - name: customer
+        entity: User
+      - name: driver
+        entity: User
+        optional: true
+    policies:
+      create:
+        - access: restricted
+          allow: User
+          # Condition implicitly handled by setting customer on create
+      read:
+        - access: restricted
+          allow: User
+          # Users should only see their own deliveries or available ones
+      update:
+        - access: restricted
+          allow: User
+          # A driver or the owner can update
+      delete:
+        - access: admin
+
+# Health check endpoint for connection testing
+endpoints:
+  health:
+    path: /api/health
+    method: GET
+    policies: []
+    handler: healthCheck
